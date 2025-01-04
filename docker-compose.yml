@@ -1,10 +1,20 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - gateway
+    networks:
+      - internal
+      - external
+
   gateway:
     build: ./gateway
-    ports:
-      - "8080:8080"
     depends_on:
       - redis
       - users
@@ -16,6 +26,12 @@ services:
     networks:
       - external
       - internal
+    expose:
+      - "8080"
+    deploy:
+      replicas: ${SCALE_GATEWAY}
+      restart_policy:
+        condition: on-failure
 
   users:
     build: ./services/users
@@ -25,6 +41,10 @@ services:
       - ./logs/users:/app/logs
     networks:
       - internal
+    deploy:
+      replicas: ${SCALE_USERS}
+      restart_policy:
+        condition: on-failure
 
   orders:
     build: ./services/orders
@@ -34,6 +54,10 @@ services:
       - ./logs/orders:/app/logs
     networks:
       - internal
+    deploy:
+      replicas: ${SCALE_ORDERS}
+      restart_policy:
+        condition: on-failure
 
   redis:
     image: redis:latest
