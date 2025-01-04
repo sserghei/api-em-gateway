@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - users
+      - orders
+    environment:
+      - APP_ENV=${APP_ENV}
+    volumes:
+      - ./logs/gateway:/app/logs
+    networks:
+      - external
+      - internal
+
+  users:
+    build: ./services/users
+    environment:
+      - APP_ENV=${APP_ENV}
+    volumes:
+      - ./logs/users:/app/logs
+    networks:
+      - internal
+
+  orders:
+    build: ./services/orders
+    environment:
+      - APP_ENV=${APP_ENV}
+    volumes:
+      - ./logs/orders:/app/logs
+    networks:
+      - internal
+
+  redis:
+    image: redis:latest
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+  external:
+    driver: bridge
